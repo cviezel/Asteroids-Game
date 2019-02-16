@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                         {
                             ball_list.remove(i);
                         }
-                        if(!i.updateCircle())
+                        else if(!i.updateCircle())
                         {
                             run();
                         }
