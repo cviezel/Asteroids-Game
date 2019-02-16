@@ -15,6 +15,10 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import java.util.Random;
+
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     AsteroidView asteroidView;
     int height, width;
     int posxRect;
-    Ball ball;
+    ArrayList<Ball> ball_list = new ArrayList<Ball>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         int posxCircle, posYCircle;
         int dx;
         int dy;
+        boolean phase = false;
 
         public Ball(int x, int y)
         {
@@ -46,38 +51,50 @@ public class MainActivity extends AppCompatActivity {
             this.dy = 30;
         }
 
-        public void updateCircle() {
+        public boolean updateCircle() {
             posxCircle += dx;
             posYCircle += dy;
-            if(posYCircle >= height - 20 && (posxCircle <= posxRect + 140 && posxCircle >= posxRect - 140 ))
+            if(!phase)
             {
-                if(superHit)
+                if(posYCircle >= height - 20 && (posxCircle <= posxRect + 140 && posxCircle >= posxRect - 140 ))
                 {
+                    if(superHit)
+                    {
+                        dx = 0;
+                        dy = dy + dx;
+                        dy *= 2;
+                        dy = -dy;
+                        superHit = false;
+                        phase = true;
+                    }
+                    else {
+                        dx = (posxCircle - posxRect) / 3;
+                        dy += 1;
+                        dy = -dy;
+                        //System.out.println(dx + " " + dy);
+                    }
+                }
+                else if ((posxCircle > width) || (posxCircle < 0))
+                {
+                    dx = -dx;
+                }
+                else if(posYCircle < 0 && !phase)
+                {
+                    dy = -dy;
+                }
+                else if (posYCircle > height)
+                {
+                    return false;
+                    //asteroidView.run();
+                }
+                if(posYCircle < 0 && phase)
+                {
+                    posYCircle = -100;
+                    dy = 0;
                     dx = 0;
-                    dy = dy + dx;
-                    dy *= 2;
-                    dy = -dy;
-                    superHit = false;
-                }
-                else {
-                    dx = (posxCircle - posxRect) / 3;
-                    dy += 1;
-                    dy = -dy;
-                    System.out.println(dx + " " + dy);
                 }
             }
-            else if ((posxCircle > width) || (posxCircle < 0))
-            {
-                dx = -dx;
-            }
-            else if(posYCircle < 0)
-            {
-                dy = -dy;
-            }
-            else if (posYCircle > height)
-            {
-                asteroidView.run();
-            }
+            return true;
         }
     }
 
@@ -106,7 +123,9 @@ public class MainActivity extends AppCompatActivity {
             display.getSize(size);
             int maxX = size.x;
             int maxY = size.y;
-            ball = new Ball(550, maxY / 2);
+            Ball ball = new Ball(550, maxY / 2);
+            ball_list.clear();
+            ball_list.add(ball);
 
             posxRect = 550;
 
@@ -114,7 +133,26 @@ public class MainActivity extends AppCompatActivity {
             while (playing)
             {
                 if (!paused) {
-                    ball.updateCircle();
+                    Random rand = new Random();
+                    int n = rand.nextInt(500);
+                    if(n == 420)
+                    {
+                        int x, y;
+                        x = rand.nextInt(1080);
+                        Ball temp = new Ball(x, maxY / 4);
+                        ball_list.add(temp);
+                    }
+                    for(Ball i : ball_list)
+                    {
+                        if(i.phase == true && i.posYCircle < 0)
+                        {
+                            ball_list.remove(i);
+                        }
+                        if(!i.updateCircle())
+                        {
+                            run();
+                        }
+                    }
                 }
                 draw();
                 try {
@@ -124,13 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        public void resetGame()
-        {
-            //canvas.drawCircle(posxCircle, posYCircle, 30l, paint);
-            //canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paint);
-            asteroidView.run();
-        }
-
         public void draw() {
             if (ourHolder.getSurface().isValid()) {
                 // Lock the canvas ready to draw
@@ -154,8 +185,8 @@ public class MainActivity extends AppCompatActivity {
                     paintRect.setColor(Color.argb(255, 255, 255, 255));
                 }
 
-
-                canvas.drawCircle(ball.posxCircle, ball.posYCircle, 30l, paint);
+                for(Ball i : ball_list)
+                    canvas.drawCircle(i.posxCircle, i.posYCircle, 30l, paint);
                 canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paintRect);
 
                 ourHolder.unlockCanvasAndPost(canvas);
@@ -182,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
             if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
                 posxRect = (int)motionEvent.getX();
 
-            if (motionEvent.getY() < height / 2)
+            if (motionEvent.getY() < height / 2 && ball_list.size() > 1)
             {
                 superHit = true;
             }
