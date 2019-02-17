@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     int height, width;
     int posxRect;
     ArrayList<Ball> ball_list = new ArrayList<Ball>();
+    Boss boss;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,59 +38,88 @@ public class MainActivity extends AppCompatActivity {
         setContentView(asteroidView);
     }
 
+    public class Boss{
+        int posx, posy;
+        int dx;
+        int dy;
+        int health;
+        public Boss(int x, int y, int h)
+        {
+            this.posx = x;
+            this.posy = y;
+            this.health = h;
+        }
+        public void hit(int dmg)
+        {
+            System.out.println("Hit for " + dmg + " damage!");
+            health -= dmg;
+        }
+    }
     public class Ball{
-        int posxCircle, posYCircle;
+        int posx, posy;
         int dx;
         int dy;
         boolean phase = false;
+        boolean hit = false;
 
         public Ball(int x, int y)
         {
-            this.posxCircle = x;
-            this.posYCircle = y;
+            this.posx = x;
+            this.posy = y;
             this.dx = 0;
             this.dy = 30;
         }
 
         public boolean updateCircle() {
-            posxCircle += dx;
-            posYCircle += dy;
+            posx += dx;
+            posy += dy;
+            if(!hit)
+            {
+                if(posx <= boss.posx + boss.health && posx >= boss.posx - boss.health && posy <= boss.posy + boss.health && posy >= boss.posy - boss.health)
+                {
+                    if(dy < 0)
+                    {
+                        hit = true;
+                        boss.hit(Math.abs(dy / 10));
+                    }
+                }
+            }
             if(!phase)
             {
-                if(posYCircle >= height - 20 && (posxCircle <= posxRect + 140 && posxCircle >= posxRect - 140 ))
+                if(posy >= height - 20 && (posx <= posxRect + 140 && posx >= posxRect - 140 ))
                 {
+                    hit = false;
                     if(superHit)
                     {
                         dx = 0;
-                        dy = dy + dx;
-                        dy *= 2;
+                        dy = Math.abs(dy * 3);
                         dy = -dy;
                         superHit = false;
                         phase = true;
                     }
                     else {
-                        dx = (posxCircle - posxRect) / 3;
+                        dx = (posx - posxRect) / 3;
                         dy += 1;
                         dy = -dy;
                         //System.out.println(dx + " " + dy);
                     }
                 }
-                else if ((posxCircle > width) || (posxCircle < 0))
+                else if ((posx > width) || (posx < 0))
                 {
                     dx = -dx;
                 }
-                else if(posYCircle < 0 && !phase)
+                else if(posy < 0 && !phase)
                 {
                     dy = -dy;
                 }
-                else if (posYCircle > height)
+                else if (posy > height)
                 {
                     return false;
                     //asteroidView.run();
                 }
-                if(posYCircle < 0 && phase)
+                if(posy < 0 && phase)
                 {
-                    posYCircle = -100;
+                    posy = -100;
                     dy = 0;
                     dx = 0;
                 }
@@ -126,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
             Ball ball = new Ball(550, maxY / 2);
             ball_list.clear();
             ball_list.add(ball);
-
+            boss = new Boss(550, 100, 400);
             posxRect = 550;
 
 
@@ -134,25 +164,34 @@ public class MainActivity extends AppCompatActivity {
             {
                 if (!paused) {
                     Random rand = new Random();
-                    int n = rand.nextInt(500);
-                    if(n == 420)
+                    int n = rand.nextInt(300);
+                    //System.out.println(n);
+                    if(n == 69)
                     {
                         int x, y;
                         x = rand.nextInt(1080);
                         Ball temp = new Ball(x, maxY / 4);
                         ball_list.add(temp);
                     }
+                    int index = 0;
+                    int j = 0;
+                    boolean delFlag = false;
                     for(Ball i : ball_list)
                     {
-                        if(i.phase == true && i.posYCircle < 0)
+                        if(i.phase == true && i.posy < 0)
                         {
-                            ball_list.remove(i);
+                            index = j;
+                            delFlag = true;
+                            //ball_list.remove(i);
                         }
                         else if(!i.updateCircle())
                         {
                             run();
                         }
+                        j++;
                     }
+                    if(delFlag)
+                        ball_list.remove(index);
                 }
                 draw();
                 try {
@@ -185,8 +224,10 @@ public class MainActivity extends AppCompatActivity {
                     paintRect.setColor(Color.argb(255, 255, 255, 255));
                 }
 
+                canvas.drawCircle(boss.posx, boss.posy, boss.health, paint);
+
                 for(Ball i : ball_list)
-                    canvas.drawCircle(i.posxCircle, i.posYCircle, 30l, paint);
+                    canvas.drawCircle(i.posx, i.posy, 30l, paint);
                 canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paintRect);
 
                 ourHolder.unlockCanvasAndPost(canvas);
@@ -217,10 +258,6 @@ public class MainActivity extends AppCompatActivity {
             {
                 superHit = true;
             }
-
-
-
-
             return true;
         }
 
