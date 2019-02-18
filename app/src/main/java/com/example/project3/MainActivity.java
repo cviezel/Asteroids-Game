@@ -54,6 +54,35 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("Hit for " + dmg + " damage!");
             health -= dmg;
         }
+        public void move()
+        {
+            posx += dx;
+            posy += dy;
+            int speed = 4000/health;
+            int ySpeed = 15;
+            Random r = new Random();
+            if(dx == 0 && dy == 0)
+            {
+                dx = r.nextInt(speed + 1);
+                dy = r.nextInt(ySpeed + 1);
+            }
+            else if(posx > width)
+            {
+                dx = - Math.abs(r.nextInt(speed + 1));
+            }
+            else if(posx < 0)
+            {
+                dx = Math.abs(r.nextInt(speed + 1));
+            }
+            else if(posy > height / 5)
+            {
+                dy = - Math.abs(r.nextInt(ySpeed + 1));
+            }
+            else if(posy < 0)
+            {
+                dy = Math.abs(r.nextInt(ySpeed + 1));
+            }
+        }
     }
     public class Ball{
         int posx, posy;
@@ -61,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         int dy;
         boolean phase = false;
         boolean hit = false;
+        int damage = 1;
 
         public Ball(int x, int y)
         {
@@ -80,7 +110,11 @@ public class MainActivity extends AppCompatActivity {
                     if(dy < 0)
                     {
                         hit = true;
-                        boss.hit(Math.abs(dy / 10));
+                        if(phase)
+                            boss.hit(2*damage);
+                        else
+                            boss.hit(damage);
+                        damage++;
                     }
                 }
             }
@@ -136,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
         Canvas canvas;
         Paint paint;
         Paint paintRect;
+        Paint paintBoss;
 
         private long thisTimeFrame;
         public AsteroidView(Context context) {
@@ -143,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
 
             ourHolder = getHolder();
             paint = new Paint();
+            paintBoss = new Paint();
             paintRect = new Paint();
         }
 
@@ -163,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
             while (playing)
             {
                 if (!paused) {
+                    boss.move();
                     Random rand = new Random();
                     int n = rand.nextInt(300);
                     //System.out.println(n);
@@ -184,9 +221,25 @@ public class MainActivity extends AppCompatActivity {
                             delFlag = true;
                             //ball_list.remove(i);
                         }
+                        if(i.posy < -100)
+                        {
+                            index = j;
+                            delFlag = true;
+                        }
                         else if(!i.updateCircle())
                         {
-                            run();
+                            {
+                                if(ball_list.size() == 1)
+                                {
+                                    run();
+                                }
+                                else
+                                {
+                                    System.out.println(ball_list.size());
+                                    index = j;
+                                    delFlag = true;
+                                }
+                            }
                         }
                         j++;
                     }
@@ -224,7 +277,8 @@ public class MainActivity extends AppCompatActivity {
                     paintRect.setColor(Color.argb(255, 255, 255, 255));
                 }
 
-                canvas.drawCircle(boss.posx, boss.posy, boss.health, paint);
+                paintBoss.setColor(Color.argb(255, 0, 0, 0));
+                canvas.drawCircle(boss.posx, boss.posy, boss.health, paintBoss);
 
                 for(Ball i : ball_list)
                     canvas.drawCircle(i.posx, i.posy, 30l, paint);
