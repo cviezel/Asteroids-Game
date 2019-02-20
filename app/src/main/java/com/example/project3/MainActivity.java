@@ -1,7 +1,9 @@
 package com.example.project3;
 
+import android.content.DialogInterface;
 import android.graphics.Point;
 import android.support.constraint.solver.widgets.Rectangle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Context;
@@ -15,20 +17,26 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.Toast;
+
 import java.util.Random;
 
 
 import java.util.ArrayList;
 
+import static android.widget.ListPopupWindow.MATCH_PARENT;
+import static android.widget.ListPopupWindow.WRAP_CONTENT;
+
 public class MainActivity extends AppCompatActivity {
 
     boolean superHit = false;
-
     AsteroidView asteroidView;
     int height, width;
     int posxRect;
     ArrayList<Ball> ball_list = new ArrayList<Ball>();
     Boss boss;
+    int lives = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +45,19 @@ public class MainActivity extends AppCompatActivity {
         asteroidView = new AsteroidView(this);
         setContentView(asteroidView);
     }
+
+
+    public void open(){
+        System.out.print("hi");
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Are you sure, You wanted to make decision");
+                alertDialogBuilder.setPositiveButton("yes",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface arg0, int arg1) {
+                                Toast.makeText(MainActivity.this,"You clicked yes button",Toast.LENGTH_LONG).show();
+                            }
+                        });}
 
     public class Boss{
         int posx, posy;
@@ -132,8 +153,8 @@ public class MainActivity extends AppCompatActivity {
                         phase = true;
                     }
                     else {
-                        dx = (posx - posxRect) / 3;
-                        dy += 1;
+                        dx = (posx - posxRect) / 4;
+                        dy = Math.abs(dy) + 1;
                         dy = -dy;
                         //System.out.println(dx + " " + dy);
                     }
@@ -226,19 +247,16 @@ public class MainActivity extends AppCompatActivity {
                             index = j;
                             delFlag = true;
                         }
-                        else if(!i.updateCircle())
-                        {
-                            {
-                                if(ball_list.size() == 1)
-                                {
-                                    run();
-                                }
-                                else
-                                {
-                                    System.out.println(ball_list.size());
-                                    index = j;
-                                    delFlag = true;
-                                }
+                        else if(!i.updateCircle()) {
+                            if (ball_list.size() == 1 || lives == 1) {
+                                //pause();
+                                //System.out.println(lives);
+                                run();
+                            } else {
+                                lives--;
+                                //System.out.println(lives);
+                                index = j;
+                                delFlag = true;
                             }
                         }
                         j++;
@@ -280,8 +298,11 @@ public class MainActivity extends AppCompatActivity {
                 paintBoss.setColor(Color.argb(255, 0, 0, 0));
                 canvas.drawCircle(boss.posx, boss.posy, boss.health, paintBoss);
 
-                for(Ball i : ball_list)
+                for(Ball i : ball_list) {
+                    int bg = Math.max(0, 255 - 8*i.damage);
+                    paint.setColor(Color.argb(255, 255, bg, bg));
                     canvas.drawCircle(i.posx, i.posy, 30l, paint);
+                }
                 canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paintRect);
 
                 ourHolder.unlockCanvasAndPost(canvas);
