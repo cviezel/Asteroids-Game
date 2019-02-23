@@ -1,8 +1,9 @@
 package com.example.project3;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Point;
-import android.support.constraint.solver.widgets.Rectangle;
+import android.graphics.Rect;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,23 +11,18 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import java.util.Random;
 
 
 import java.util.ArrayList;
-
-import static android.widget.ListPopupWindow.MATCH_PARENT;
-import static android.widget.ListPopupWindow.WRAP_CONTENT;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Ball> ball_list = new ArrayList<Ball>();
     Boss boss;
     int lives = 3;
+    Rect button;
+    boolean pauseFlag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,19 +43,6 @@ public class MainActivity extends AppCompatActivity {
         asteroidView = new AsteroidView(this);
         setContentView(asteroidView);
     }
-
-
-    public void open(){
-        System.out.print("hi");
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage("Are you sure, You wanted to make decision");
-                alertDialogBuilder.setPositiveButton("yes",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface arg0, int arg1) {
-                                Toast.makeText(MainActivity.this,"You clicked yes button",Toast.LENGTH_LONG).show();
-                            }
-                        });}
 
     public class Boss{
         int posx, posy;
@@ -98,10 +83,18 @@ public class MainActivity extends AppCompatActivity {
             else if(posy > height / 5)
             {
                 dy = - Math.abs(r.nextInt(ySpeed + 1));
+                if(dx > 0)
+                    dx = r.nextInt(speed + 1);
+                else
+                    dx = -r.nextInt(speed + 1);
             }
             else if(posy < 0)
             {
                 dy = Math.abs(r.nextInt(ySpeed + 1));
+                if(dx > 0)
+                    dx = r.nextInt(speed + 1);
+                else
+                    dx = -r.nextInt(speed + 1);
             }
         }
     }
@@ -132,7 +125,11 @@ public class MainActivity extends AppCompatActivity {
                     {
                         hit = true;
                         if(phase)
-                            boss.hit(2*damage);
+                        {
+                            if(2*damage >= 20 && lives < 3)
+                                lives++;
+                            boss.hit(2 * damage);
+                        }
                         else
                             boss.hit(damage);
                         damage++;
@@ -192,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
         Paint paint;
         Paint paintRect;
         Paint paintBoss;
+        Paint paintLives;
+        Paint paintBg;
 
         private long thisTimeFrame;
         public AsteroidView(Context context) {
@@ -201,6 +200,8 @@ public class MainActivity extends AppCompatActivity {
             paint = new Paint();
             paintBoss = new Paint();
             paintRect = new Paint();
+            paintLives = new Paint();
+            paintBg = new Paint();
         }
 
         @Override
@@ -215,18 +216,19 @@ public class MainActivity extends AppCompatActivity {
             ball_list.add(ball);
             boss = new Boss(550, 100, 400);
             posxRect = 550;
-
+            lives = 3;
+            superHit = false;
 
             while (playing)
             {
                 if (!paused) {
                     boss.move();
                     Random rand = new Random();
-                    int n = rand.nextInt(300);
+                    int n = rand.nextInt(350);
                     //System.out.println(n);
-                    if(n == 69)
+                    if(n == 13)
                     {
-                        int x, y;
+                        int x;
                         x = rand.nextInt(1080);
                         Ball temp = new Ball(x, maxY / 4);
                         ball_list.add(temp);
@@ -251,7 +253,8 @@ public class MainActivity extends AppCompatActivity {
                             if (ball_list.size() == 1 || lives == 1) {
                                 //pause();
                                 //System.out.println(lives);
-                                run();
+                                startActivity(new Intent(MainActivity.this, LoseScreenActivity.class));
+                                //run();
                             } else {
                                 lives--;
                                 //System.out.println(lives);
@@ -297,13 +300,48 @@ public class MainActivity extends AppCompatActivity {
 
                 paintBoss.setColor(Color.argb(255, 0, 0, 0));
                 canvas.drawCircle(boss.posx, boss.posy, boss.health, paintBoss);
+                paint.setTextSize(70);
+                canvas.drawText(Integer.toString(boss.health), boss.posx - 50, boss.posy + 10, paint);
 
                 for(Ball i : ball_list) {
                     int bg = Math.max(0, 255 - 8*i.damage);
                     paint.setColor(Color.argb(255, 255, bg, bg));
+                    //if(i.damage >= 10)
+                    //    paint.setColor(Color.YELLOW);
                     canvas.drawCircle(i.posx, i.posy, 30l, paint);
                 }
                 canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paintRect);
+
+                paintLives.setColor(Color.GREEN);
+                if(lives == 1 || ball_list.size() == 1)
+                    paintLives.setColor(Color.RED);
+
+                int cx, cy;
+                cx = 40;
+                cy = 30;
+                if(lives == 1)
+                {
+                    canvas.drawCircle(cx, cy, 20, paintLives);
+                }
+                if(lives == 2)
+                {
+                    canvas.drawCircle(cx, cy, 20, paintLives);
+                    canvas.drawCircle(cx + 100, cy, 20, paintLives);
+                }
+                if(lives == 3)
+                {
+                    canvas.drawCircle(cx, cy, 20, paintLives);
+                    canvas.drawCircle(cx + 100, cy, 20, paintLives);
+                    canvas.drawCircle(cx + 200, cy, 20, paintLives);
+                }
+                paintBg.setColor(Color.WHITE);
+                paintBg.setTextSize(70);
+                canvas.drawText("Lives", 40, 140, paintBg);
+
+                Paint butPaint = new Paint();
+                butPaint.setColor(Color.WHITE);
+                button = new Rect(width - 150, 50, width- 50,  150);
+                canvas.drawRect(button, butPaint);
 
                 ourHolder.unlockCanvasAndPost(canvas);
             }
@@ -326,10 +364,22 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onTouchEvent(MotionEvent motionEvent) {
-            if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
+            if(motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN && button.contains((int)motionEvent.getX(), (int)motionEvent.getY()))
+            {
+                if(!paused)
+                {
+                    paused = true;
+                }
+                else
+                {
+                    paused = false;
+                }
+                return true;
+            }
+            else if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
                 posxRect = (int)motionEvent.getX();
 
-            if (motionEvent.getY() < height / 2 && ball_list.size() > 1)
+            else if (motionEvent.getY() < height / 2 && ball_list.size() > 1)
             {
                 superHit = true;
             }
@@ -338,11 +388,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
     // This method executes when the player starts the game
     @Override
     protected void onResume() {
         super.onResume();
-
         // Tell the gameView resume method to execute
         asteroidView.resume();
     }
