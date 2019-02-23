@@ -379,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
             else if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
                 posxRect = (int)motionEvent.getX();
 
-            else if (motionEvent.getY() < height / 2 && ball_list.size() > 1)
+            else if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN && motionEvent.getY() < height / 2 && ball_list.size() > 1)
             {
                 superHit = true;
             }
