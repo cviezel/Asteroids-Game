@@ -124,11 +124,12 @@ public class MainActivity extends AppCompatActivity {
                     if(dy < 0)
                     {
                         hit = true;
+                        dy -= 1;
                         if(phase)
                         {
                             if(2*damage >= 20 && lives < 3)
                                 lives++;
-                            boss.hit(2 * damage);
+                            boss.hit(4 * damage);
                         }
                         else
                             boss.hit(damage);
@@ -151,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     else {
                         dx = (posx - posxRect) / 4;
-                        dy = Math.abs(dy) + 1;
                         dy = -dy;
                         //System.out.println(dx + " " + dy);
                     }
@@ -224,9 +224,9 @@ public class MainActivity extends AppCompatActivity {
                 if (!paused) {
                     boss.move();
                     Random rand = new Random();
-                    int n = rand.nextInt(350);
+                    int n = rand.nextInt(500);
                     //System.out.println(n);
-                    if(n == 13)
+                    if(n == 13 && ball_list.size() < 3 || ball_list.size() == 0)
                     {
                         int x;
                         x = rand.nextInt(1080);
@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                             delFlag = true;
                         }
                         else if(!i.updateCircle()) {
-                            if (ball_list.size() == 1 || lives == 1) {
+                            if (lives == 0) {
                                 //pause();
                                 //System.out.println(lives);
                                 startActivity(new Intent(MainActivity.this, LoseScreenActivity.class));
@@ -312,9 +312,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 canvas.drawRect(posxRect - 140, height - 20, posxRect + 140, height, paintRect);
 
-                paintLives.setColor(Color.GREEN);
-                if(lives == 1 || ball_list.size() == 1)
-                    paintLives.setColor(Color.RED);
+                paintLives.setColor(Color.WHITE);
 
                 int cx, cy;
                 cx = 40;
