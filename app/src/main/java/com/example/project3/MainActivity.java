@@ -57,14 +57,14 @@ public class MainActivity extends AppCompatActivity {
         }
         public void hit(int dmg)
         {
-            System.out.println("Hit for " + dmg + " damage!");
+            //System.out.println("Hit for " + dmg + " damage!");
             health -= dmg;
         }
         public void move()
         {
             posx += dx;
             posy += dy;
-            int speed = 4000/health;
+            int speed = Math.min(4000/health, 80);
             int ySpeed = 15;
             Random r = new Random();
             if(dx == 0 && dy == 0)
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
             posy += dy;
             if(!hit)
             {
-                if(posx <= boss.posx + boss.health && posx >= boss.posx - boss.health && posy <= boss.posy + boss.health && posy >= boss.posy - boss.health)
+                if(posx <= boss.posx + Math.max(50, boss.health) && posx >= boss.posx - Math.max(50, boss.health) && posy <= boss.posy + Math.max(50, boss.health) && posy >= boss.posy - Math.max(50, boss.health))
                 {
                     if(dy < 0)
                     {
@@ -127,9 +127,9 @@ public class MainActivity extends AppCompatActivity {
                         dy -= 1;
                         if(phase)
                         {
-                            if(2*damage >= 20 && lives < 3)
+                            if(damage >= 5 && lives < 3)
                                 lives++;
-                            boss.hit(4 * damage);
+                            boss.hit(5 * damage);
                         }
                         else
                             boss.hit(damage);
@@ -299,7 +299,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 paintBoss.setColor(Color.argb(255, 0, 0, 0));
-                canvas.drawCircle(boss.posx, boss.posy, boss.health, paintBoss);
+                if(boss.health <= 0)
+                {
+                    startActivity(new Intent(MainActivity.this, MenuScreenActivity.class));
+                }
+                canvas.drawCircle(boss.posx, boss.posy, Math.max(50, boss.health), paintBoss);
                 paint.setTextSize(70);
                 canvas.drawText(Integer.toString(boss.health), boss.posx - 50, boss.posy + 10, paint);
 
@@ -374,12 +378,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
             }
-            else if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
-                posxRect = (int)motionEvent.getX();
-
-            else if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN && motionEvent.getY() < height / 2 && ball_list.size() > 1)
+            else if(paused == false)
             {
-                superHit = true;
+                if ((motionEvent.getY() > height / 2) && (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN || motionEvent.getAction() == MotionEvent.ACTION_MOVE))
+                    posxRect = (int) motionEvent.getX();
+
+                else if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN && motionEvent.getY() < height / 2 && ball_list.size() > 1) {
+                    superHit = true;
+                }
             }
             return true;
         }
