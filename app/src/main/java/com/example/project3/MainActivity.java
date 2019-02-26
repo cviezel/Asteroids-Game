@@ -301,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
                 paintBoss.setColor(Color.argb(255, 0, 0, 0));
                 if(boss.health <= 0)
                 {
-                    startActivity(new Intent(MainActivity.this, MenuScreenActivity.class));
+                    startActivity(new Intent(MainActivity.this, WinScreenActivity.class));
                 }
                 canvas.drawCircle(boss.posx, boss.posy, Math.max(50, boss.health), paintBoss);
                 paint.setTextSize(70);
